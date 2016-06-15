@@ -49,7 +49,7 @@ switch(operation){
 case 'i':
 
 scanf("%d", &input);
-	//		root = insert(root, input, input);
+	//root = insert(root, input, input);
 		//	print_tree(root);
 		printf("the number inserted is %d ",input);
 
