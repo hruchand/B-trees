@@ -1,5 +1,35 @@
 // Deletion function prototype.
+/* Master deletion function.
+ */
+node * delete(node * root, int key) {
 
+	node * key_leaf;
+	record * key_record;
+
+	key_record = find(root, key, false);
+	key_leaf = find_leaf(root, key, false);
+	if (key_record != NULL && key_leaf != NULL) {
+		root = delete_entry(root, key_leaf, key, key_record);
+		free(key_record);
+	}
+	return root;
+}
+
+/* Deletes an entry from the B+ tree*/
+node * delete_entry( node * root, node * n, int key, void * pointer ) {
+
+	int min_keys;
+	node * neighbor;
+	int neighbor_index;
+	int k_prime_index, k_prime;
+	int capacity;
+
+	// Remove key and pointer from node.
+
+	n = remove_entry_from_node(n, key, pointer);
+
+	}
+	
 int get_neighbor_index( node * n );
 node * adjust_root();
 node * coalesce_nodes();
