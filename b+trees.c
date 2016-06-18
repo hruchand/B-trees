@@ -39,12 +39,8 @@ node * make_leaf( void );
 int get_left_index(node * parent, node * left);
 node * insert_into_leaf( node * leaf, int key, record * pointer );
 node * insert_into_leaf_after_splitting(node * root, node * leaf, int key, record * pointer);
-node * insert_into_node(node * root, node * parent, 
-		int left_index, int key, node * right);
-node * insert_into_node_after_splitting(node * root, node * parent, int left_index, 
-		int key, node * right);
-node * insert_into_parent(node * root, node * left, int key, node * right);
 node * insert_into_new_root(node * left, int key, node * right);
+node * insert_into_parent(node * root, node * left, int key, node * right);
 node * insert(node *root, int key, int value);
 node * start_new_tree(int key, record * pointer);
 
@@ -52,7 +48,9 @@ node * start_new_tree(int key, record * pointer);
 //PRINT PROTOTYPES
 
 void print_tree( node * root );
-
+void enqueue( node * new_node );
+node * dequeue( void );
+int path_to_root( node * root, node * child );
 
 
 void main()
@@ -74,7 +72,7 @@ void main()
 		case 'i':
 			scanf("%d", &input);
 			root = insert(root, input, input);
-			//	print_tree(root);
+				print_tree(root);
 			printf("the number inserted is %d ",input);
 		        break;
 
@@ -92,7 +90,7 @@ void main()
 			break;
 
 		case 'p':
-			//print_tree(root);
+			print_tree(root);
 			break;
 
 		case 'e':
@@ -185,11 +183,8 @@ node * insert(node *root, int key, int value)
 	 
 }
 
-node * insert_into_leaf_after_splitting(node * root, node * leaf, int key, record * pointer) {
-
-	printf("\
-ninsert_into_leaf_after_splitting");
-
+node * insert_into_leaf_after_splitting(node * root, node * leaf, int key, record * pointer)
+{
 	node * new_leaf;
 	int * temp_keys;
 	void ** temp_pointers;
@@ -198,17 +193,9 @@ ninsert_into_leaf_after_splitting");
 	new_leaf = make_leaf();
 
 	temp_keys = malloc( order * sizeof(int) );
-	if (temp_keys == NULL) {
-		perror("Temporary keys array.");
-		exit(EXIT_FAILURE);
-	}
-
+	
 	temp_pointers = malloc( order * sizeof(void *) );
-	if (temp_pointers == NULL) {
-		perror("Temporary pointers array.");
-		exit(EXIT_FAILURE);
-	}
-
+	
 	insertion_index = 0;
 	while (insertion_index < order - 1 && leaf->keys[insertion_index] < key)
 		insertion_index++;
@@ -272,60 +259,6 @@ node * insert_into_node(node * root, node * n,
 }
 
 
-node * insert_into_node_after_splitting(node * root, node * old_node, int left_index, 
-		int key, node * right) {
-
-	int i, j, split, k_prime;
-	node * new_node, * child;
-	int * temp_keys;
-	node ** temp_pointers;
-
-
-	temp_pointers = malloc( (order + 1) * sizeof(node *) );
-	
-	temp_keys = malloc( order * sizeof(int) );
-	
-
-	for (i = 0, j = 0; i < old_node->num_keys + 1; i++, j++) {
-		if (j == left_index + 1) j++;
-		temp_pointers[j] = old_node->pointers[i];
-	}
-
-	for (i = 0, j = 0; i < old_node->num_keys; i++, j++) {
-		if (j == left_index) j++;
-		temp_keys[j] = old_node->keys[i];
-	}
-
-	temp_pointers[left_index + 1] = right;
-	temp_keys[left_index] = key;
-
-	split = cut(order);
-	new_node = make_node();
-	old_node->num_keys = 0;
-	for (i = 0; i < split - 1; i++) {
-		old_node->pointers[i] = temp_pointers[i];
-		old_node->keys[i] = temp_keys[i];
-		old_node->num_keys++;
-	}
-	old_node->pointers[i] = temp_pointers[i];
-	k_prime = temp_keys[split - 1];
-	for (++i, j = 0; i < order; i++, j++) {
-		new_node->pointers[j] = temp_pointers[i];
-		new_node->keys[j] = temp_keys[i];
-		new_node->num_keys++;
-	}
-	new_node->pointers[j] = temp_pointers[i];
-	free(temp_pointers);
-	free(temp_keys);
-	new_node->parent = old_node->parent;
-	for (i = 0; i <= new_node->num_keys; i++) {
-		child = new_node->pointers[i];
-		child->parent = new_node;
-	}
-
-	return insert_into_parent(root, old_node, k_prime, new_node);
-}
-
 
 node * insert_into_parent(node * root, node * left, int key, node * right) {
 
@@ -339,35 +272,7 @@ node * insert_into_parent(node * root, node * left, int key, node * right) {
 	if (parent == NULL)
 		return insert_into_new_root(left, key, right);
 
-	/* Case: leaf or node. (Remainder of
-	 * function body.)  
-	 */
 
-	/* Find the parent's pointer to the left 
-	 * node.
-	 */
-
-	left_index = get_left_index(parent, left);
-
-
-	/* Simple case: the new key fits into the node. 
-	 */
-
-	if (parent->num_keys < order - 1)
-		return insert_into_node(root, parent, left_index, key, right);
-
-	/* Harder case:  split a node in order 
-	 * to preserve the B+ tree properties.
-	 */int get_left_index(node * parent, node * left) {
-
-	int left_index = 0;
-	while (left_index <= parent->num_keys && 
-			parent->pointers[left_index] != left)
-		left_index++;
-	return left_index;
-}
-
-	return insert_into_node_after_splitting(root, parent, left_index, key, right);
 }
 
 node * insert_into_new_root(node * left, int key, node * right) {
@@ -395,18 +300,9 @@ record * make_record(int value) {
 	return new_record;
 }
 
-int get_left_index(node * parent, node * left) {
-
-	int left_index = 0;
-	while (left_index <= parent->num_keys && 
-			parent->pointers[left_index] != left)
-		left_index++;
-	return left_index;
-}
-
 //PRINT FUNCTIONS
 
-
+//Printing functions
 
 
 void enqueue( node * new_node )
@@ -467,12 +363,16 @@ void print_tree(node  * root)
 
         for(i=0; i < n->num_keys; i++)
         {
-            printf("%d", n->keys[i]);
+            printf(" %d", n->keys[i]);
         }
 
         if (!n ->is_leaf)
             for (i=0; i <= n->num_keys; i++)
-                enqueue(n->pointers[i]);
+{
+ 
+               enqueue(n->pointers[i]);
+}
+printf("|");
     }
     printf("\n");
 }
