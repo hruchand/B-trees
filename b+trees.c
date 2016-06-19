@@ -29,7 +29,7 @@ node * find_leaf( node * root, int key);
 record * find( node * root, int key );
 int cut( int length );
 node * find_leaf( node * root, int key);
-void find_and_print(node * root, int key); 
+void find_and_print(node * root, int key);
 
 
 //INSERT PROTOTYPES
@@ -51,6 +51,14 @@ void print_tree( node * root );
 void enqueue( node * new_node );
 node * dequeue( void );
 int path_to_root( node * root, node * child );
+
+//DELETE PROTOTYPES
+node* delete_entry(node*root , node*n, int key, void * pointer);
+node*delete(node*root,int key);
+node *remove_entry_from_node(node *n, int key, node* pointer);
+node* adjust_root(node*root);
+
+
 
 
 void main()
@@ -164,10 +172,10 @@ node * insert(node *root, int key, int value)
 {
 	record* pointer;
 	node* leaf;
-	
+
 	pointer = make_record(value);
 
-	if (root == NULL) 
+	if (root == NULL)
 		return start_new_tree(key, pointer);
 
 	leaf = find_leaf(root, key);
@@ -180,7 +188,7 @@ node * insert(node *root, int key, int value)
 
 	return insert_into_leaf_after_splitting(root, leaf, key, pointer);
 
-	 
+
 }
 
 node * insert_into_leaf_after_splitting(node * root, node * leaf, int key, record * pointer)
@@ -193,9 +201,9 @@ node * insert_into_leaf_after_splitting(node * root, node * leaf, int key, recor
 	new_leaf = make_leaf();
 
 	temp_keys = malloc( order * sizeof(int) );
-	
+
 	temp_pointers = malloc( order * sizeof(void *) );
-	
+
 	insertion_index = 0;
 	while (insertion_index < order - 1 && leaf->keys[insertion_index] < key)
 		insertion_index++;
@@ -244,7 +252,7 @@ node * insert_into_leaf_after_splitting(node * root, node * leaf, int key, recor
 
 
 
-node * insert_into_node(node * root, node * n, 
+node * insert_into_node(node * root, node * n,
 		int left_index, int key, node * right) {
 	int i;
 
@@ -369,7 +377,7 @@ void print_tree(node  * root)
         if (!n ->is_leaf)
             for (i=0; i <= n->num_keys; i++)
 {
- 
+
                enqueue(n->pointers[i]);
 }
 printf("|");
@@ -417,8 +425,8 @@ if (c == NULL) return NULL;
 node * find_leaf( node * root, int key ) {
 	int i = 0;
 	node * c = root;
-	if (c == NULL) 
-		return c; 																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																						
+	if (c == NULL)
+		return c;
 
 	while (!c->is_leaf) {
 		i = 0;
@@ -442,5 +450,96 @@ void find_and_print(node * root, int key) {
 }
 
 
+
+
+node*delete(node*root,int key)
+{
+node* curr_leaf;
+record* curr_record;
+
+curr_leaf = find_leaf(root,key);
+curr_record =  find(root, key);
+
+if (curr_record != NULL && curr_leaf != NULL)
+{
+root = delete_entry(root,curr_leaf, key, curr_record);
+free(curr_record);
+}
+
+return root;
+}
+
+node* delete_entry(node*root , node*n, int key, void * pointer)
+{
+int min_keys;
+node * adj;
+int adj_idx;
+int k_prime_index, k_prime;
+int cap;
+
+n =remove_entry_from_node(n, key, pointer);
+
+if (n==root)
+return adjust_root(root);
+
+}
+
+
+
+node *remove_entry_from_node(node *n, int key, node* pointer)
+{
+int i, tot_pointers;
+
+i=0;
+while (n-> keys[i] != key)
+i++;
+for(i; i< n-> num_keys; i++)
+n-> keys[i] = n-> keys[i+1];
+
+tot_pointers = n-> is_leaf ? n-> num_keys: n-> num_keys+1;
+i=0;
+while(n->pointers[i] != pointer)
+i++;
+for(i;i<tot_pointers;i++)
+n-> pointers[i] = n-> pointers[i+1];
+
+n-> num_keys--;
+
+if (n->is_leaf)
+
+for(i= n-> num_keys; i< order-1; i++)
+n-> pointers[i] = NULL;
+
+else
+for(i = n-> num_keys+1;i<order;i++)
+n-> pointers[i] = NULL;
+
+return n;
+}
+
+node* adjust_root(node*root)
+{
+node *root_new;
+
+if (root->num_keys > 0)
+return root;
+
+if(root-> is_leaf == false)
+{
+root_new = root->pointers[0];
+root_new-> parent = NULL;
+}
+
+else
+root_new = NULL;
+free(root-> keys);
+free(root->pointers);
+free(root);
+
+return root_new;
+
+
+
+}
 
 
