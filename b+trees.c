@@ -22,6 +22,7 @@ typedef struct node {
 int order = DEFAULT_ORDER;
 
 node * queue = NULL;
+node * root;
 
 //FIND PROTOTYPES
 void find_and_print(node * root, int key);
@@ -65,7 +66,7 @@ void main()
 {
 	char operation;
 	int input;
-	node * root;
+
 	int exit_flag=0;
 
 
@@ -86,8 +87,8 @@ void main()
 
 		case 'd':
 			scanf("%d",& input);
-			//root = delete(root, input);
-			//		print_tree(root);
+			root = delete(root, input);
+					print_tree(root);
 			printf("the number deleted is %d ",input);
 			break;
 
@@ -272,13 +273,14 @@ node * insert_into_parent(node * root, node * left, int key, node * right) {
 
 	int left_index;
 	node * parent;
+	node * temp;
 
 	parent = left->parent;
 
 	/* Case: new root. */
 
 	if (parent == NULL)
-		return insert_into_new_root(left, key, right);
+		return temp =  insert_into_new_root(left, key, right);
 
 
 }
@@ -434,7 +436,7 @@ node * find_leaf( node * root, int key ) {
 			if (key >= c->keys[i]) i++;
 			else break;
 		}
-		c = (node *)c->pointers[i];
+		c =(node*) c->pointers[i];
 	}
 
 	return c;
