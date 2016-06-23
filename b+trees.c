@@ -21,9 +21,11 @@ typedef struct node {
 
 int order = DEFAULT_ORDER;
 
-node * queue = NULL;
+node * Q1 = NULL;
+node* Q2 = NULL;
 node * root;
-
+node*left=NULL;
+node*right= NULL;
 //FIND PROTOTYPES
 void find_and_print(node * root, int key);
 node * find_leaf( node * root, int key);
@@ -49,8 +51,10 @@ node * start_new_tree(int key, record * pointer);
 //PRINT PROTOTYPES
 
 void print_tree( node * root );
-void enqueue( node * new_node );
-node * dequeue( void );
+void enqueue_1(node * new_node );
+void enqueue_2(node * new_node );
+node * dequeue_1( void );
+node * dequeue_2( void );
 int path_to_root( node * root, node * child );
 
 //DELETE PROTOTYPES
@@ -82,7 +86,7 @@ void main()
 			scanf("%d", &input);
 			root = insert(root, input, input);
 				print_tree(root);
-			printf("the number inserted is %d ",input);
+			//printf("the number inserted is %d ",input);
 		        break;
 
 		case 'd':
@@ -315,17 +319,37 @@ record * make_record(int value) {
 //Printing functions
 
 
-void enqueue( node * new_node )
+void enqueue_1(node * new_node )
 {
     node * c;
-    if (queue == NULL)
+    if (Q1 == NULL)
     {
-        queue = new_node;
-        queue->next = NULL;
+        Q1 = new_node;
+        Q1->next = NULL;
     }
     else
     {
-        c = queue;
+        c = Q1;
+        while(c->next != NULL)
+        {
+            c = c->next;
+        }
+        c->next = new_node;
+        new_node->next = NULL;
+    }
+}
+
+void enqueue_2(node * new_node )
+{
+    node * c;
+    if (Q2 == NULL)
+    {
+        Q2 = new_node;
+        Q2->next = NULL;
+    }
+    else
+    {
+        c = Q2;
         while(c->next != NULL)
         {
             c = c->next;
@@ -336,21 +360,30 @@ void enqueue( node * new_node )
 }
 
 
-node * dequeue( void )
+
+
+
+node * dequeue_1(void)
 {
-    node * n = queue;
-    queue = queue->next;
+    node * n = Q1;
+Q1 = Q1->next;
+    n->next = NULL;
+    return n;
+}
+node * dequeue_2(void)
+{
+    node * n = Q2;
+Q2 = Q2->next;
     n->next = NULL;
     return n;
 }
 
-
 void print_tree(node  * root)
 {
-    node * n = NULL;
-    int rank =0;
-    int i=0;
-    int new_rank=0;
+    node * current = NULL;
+    node * x = NULL;
+
+
 
     if(root == NULL)
     {
@@ -358,46 +391,47 @@ void print_tree(node  * root)
         return;
     }
 
-    queue = NULL;
-    enqueue(root);
-    while (queue!=NULL)
+
+enqueue_1(root);
+while (Q1!=NULL || Q2!= NULL){
+    while (Q1!=NULL)
     {
-        n= dequeue();
-        if(n->parent != NULL && n == n->parent->pointers[0])
-            new_rank = path_to_root(root,n);
-        if(new_rank != rank)
-        {
-            rank=new_rank;
-            printf("\n");
-        }
 
-        for(i=0; i < n->num_keys; i++)
-        {
-            printf(" %d", n->keys[i]);
-        }
-
-        if (!n ->is_leaf)
-            for (i=0; i <= n->num_keys; i++)
-{
-
-               enqueue(n->pointers[i]);
-}
-printf("|");
-    }
-    printf("\n");
-}
-
-int path_to_root(node*root, node*child)
-{
-    int length = 0;
-    node *c = child;
-    while(c!=root)
+    current = dequeue_1();
+     for(int i=0; i<current->num_keys; i++)
     {
-        c= c->parent;
-        length++;
+    printf("%d", current->keys[i]);
+    printf("  ");
     }
-    return length;
+    printf("|");
+    if (current->is_leaf == false)
+    {
+    for(int i=0; i<=current->num_keys; i++)
+    enqueue_2(current->pointers[i]);
+    }
+
 }
+printf("\n");
+while(Q2!= NULL)
+{
+current= dequeue_2();
+for(int i=0; i<current->num_keys; i++)
+    {
+    printf("%d", current->keys[i]);
+    printf("  ");
+    }
+    printf("|");
+    if (current->is_leaf == false)
+    {
+    for(int i=0; i<=current->num_keys; i++)
+    enqueue_1(current->pointers[i]);
+    }
+
+}
+printf("\n");
+}
+}
+
 
 
 
