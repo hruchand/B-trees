@@ -689,9 +689,6 @@ node * coalesce_nodes(node * root, node * n, node * neighbor, int neighbor_index
 
 	if (!n->is_leaf) {
 
-		/* Append k_prime.
-		 */
-
 		neighbor->keys[neighbor_insertion_index] = k_prime;
 		neighbor->num_keys++;
 
@@ -705,26 +702,13 @@ node * coalesce_nodes(node * root, node * n, node * neighbor, int neighbor_index
 			n->num_keys--;
 		}
 
-		/* The number of pointers is always
-		 * one more than the number of keys.
-		 */
-
 		neighbor->pointers[i] = n->pointers[j];
-
-		/* All children must now point up to the same parent.
-		 */
 
 		for (i = 0; i < neighbor->num_keys + 1; i++) {
 			tmp = (node *)neighbor->pointers[i];
 			tmp->parent = neighbor;
 		}
 	}
-
-	/* In a leaf, append the keys and pointers of
-	 * n to the neighbor.
-	 * Set the neighbor's last pointer to point to
-	 * what had been n's right neighbor.
-	 */
 
 	else {
 		for (i = neighbor_insertion_index, j = 0; j < n->num_keys; i++, j++) {
@@ -742,23 +726,11 @@ node * coalesce_nodes(node * root, node * n, node * neighbor, int neighbor_index
 	return root;
 }
 
-
-/* Redistributes entries between two nodes when
- * one has become too small after deletion
- * but its neighbor is too big to append the
- * small node's entries without exceeding the
- * maximum
- */
 node * redistribute_nodes(node * root, node * n, node * neighbor, int neighbor_index,
 		int k_prime_index, int k_prime) {
 
 	int i;
 	node * tmp;
-
-	/* Case: n has a neighbor to the left.
-	 * Pull the neighbor's last key-pointer pair over
-	 * from the neighbor's right end to n's left end.
-	 */
 
 	if (neighbor_index != -1) {
 		if (!n->is_leaf)
@@ -783,11 +755,6 @@ node * redistribute_nodes(node * root, node * n, node * neighbor, int neighbor_i
 		}
 	}
 
-	/* Case: n is the leftmost child.
-	 * Take a key-pointer pair from the neighbor to the right.
-	 * Move the neighbor's leftmost key-pointer pair
-	 * to n's rightmost position.
-	 */
 
 	else {
 		if (n->is_leaf) {
@@ -809,11 +776,6 @@ node * redistribute_nodes(node * root, node * n, node * neighbor, int neighbor_i
 		if (!n->is_leaf)
 			neighbor->pointers[i] = neighbor->pointers[i + 1];
 	}
-
-	/* n now has one more key and one more pointer;
-	 * the neighbor has one fewer of each.
-	 */
-
 	n->num_keys++;
 	neighbor->num_keys--;
 
