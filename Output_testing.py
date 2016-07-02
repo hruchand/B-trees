@@ -1,11 +1,12 @@
 import re
 mainIndex = 0
 secIndex = 0
-
 noOfNodes = list()
 L=list()
+# open the desired file
 with open('output.txt') as f:
     file = f.read().splitlines()
+# loop to get the number of "|" so that we can know the number of nodes in a particular level
 for line in file:
     arr_2 = file[secIndex]
     arr_2 = (arr_2.replace(" ", ""))
@@ -14,77 +15,47 @@ for line in file:
     while i < len(arr_2):
         if arr_2[i] == "|":
             y += 1
-
             i += 1
         else:
             i += 1
     noOfNodes.append(y)
     secIndex+=1
-#print file
+# loop to run three tests
+# 1. Sorting Test
+# 2. No of keys check
+# 3. Key pointer relationship test
 for line in file:
+    # Sorting test
     arr_1 = file[mainIndex]
-
-   # print arr_2
-
-           # break
-
-            #break;
-    print ("no of nodes is:"), noOfNodes
-    #arr_1=(file[mainIndex].replace("|",""))
-    #arr_1 = (arr_1.replace(" ",""))
-    # print arr_1
-
-
-    # sorting test
     i = 0
     result =  [int(arr_1) for arr_1 in re.findall(r'\b\d+\b', arr_1)]
-    #result = map(int,arr_1)
-    print ("the result is" ),result
     if len(result) ==1:
-        print ("only one element!! test passed")
+        print ("Only one element. Sorting test: OK")
     while i < len(result) -1:
-
         if result[i] <= result[i + 1]:
-            print "sorting test passed"
-          #  print arr_1[i + 1]
-
+            print "Sorting test: OK"
         else:
-            print "test failed!"
+            print "Sorting test: FAILED"
         i += 1
-
-
-    # length test
-    keys = input( "enter the number of keys you insteted:")
-   # print "array length", len(arr_1)
+    # No of keys Check
+    keys = input( "Enter the number of keys inserted:")
     L.append(len(result))
-    print L
-    #if len(L) == 1:
     x = L[0]
-    #else:
-   # print ("lenthh of L"), len(L)
-    #x=1
     i=0
     while i < len(L)-1:
-    #if L[i+1] != 0:
         x = x + L[i+1]
         i= i+1
-
-
-   # print "keys is", keys
-    #print "x is", x
-
-
     if x == keys:
-        print ("key check test passed!")
+        print ("key check test: OK!")
     else:
-        print ("key check failed")
+        print ("key check test: FAILED")
 
+    #Node pointer relationship test
     while i < len(noOfNodes)-1:
         if len(result)+1 == noOfNodes[mainIndex+1]:
-            print ("node pointer relation test OK")
+            print ("Node pointer relationship test: OK")
             i+=1
         else:
-            print ("node pointer relation test failed")
+            print ("Node pointer relationship test: FAILED")
             i+=1
-
     mainIndex +=1
