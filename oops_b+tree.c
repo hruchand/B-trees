@@ -15,7 +15,7 @@ typedef struct tree {
 
 }tree;
 
-typedef struct tree *my_tree;
+typedef struct tree *Tree;
 
 typedef struct record
 {
@@ -39,9 +39,9 @@ node * insert(node *root, int key, int value);
 
 
 
-my_tree tree_init()
+Tree tree_init()
 {
-my_tree self = (my_tree)malloc(sizeof(struct tree));
+Tree self = (Tree)malloc(sizeof(struct tree));
 
  self->insert_in_tree = insert;
  return self;
@@ -138,12 +138,8 @@ void main()
     int exit_flag=0;
     int exit=0;
     char detail;
-   // tree my_tree();
 
-// my_tree tree;
-
-//root->tree1 = my_tree();
-tree tree1 = tree_init();
+Tree tree1 = tree_init();
 
     printf ("press i for insertion;\npress d for deletion;\npress l for lookup;\npress p to print tree;\n ");
 
@@ -157,7 +153,7 @@ tree tree1 = tree_init();
 
         case 'i':
             scanf("%d", &input);
-     root->tree1.insert_in_tree(root,input,input);
+     root = tree1->insert_in_tree(root,input,input);
             print_tree(root);
             //printf("the number inserted is %d ",input);
             break;
