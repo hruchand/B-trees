@@ -3,6 +3,9 @@
 #include <stdbool.h>
 
 #define DEFAULT_ORDER 2
+#define MAX_CHILDREN 3
+#define CSBPT_ELEM_SIZE (sizeof(int) + sizeof(void *))
+
 
 typedef struct record{
 	int value;
@@ -34,7 +37,9 @@ int order = DEFAULT_ORDER;
 node * queue = NULL;
 leaf_group * root = NULL;
 node *parent = NULL;
+int num_of_leaf_groups;
 int count;
+leaf_group **leaf;
 
 //FIND PROTOTYPES
 void find_and_print(node * root, int key);
@@ -68,6 +73,7 @@ int path_to_root( node * root, node * child );
 node* new_parent(void);
 node* make_parent(void);
 leaf_group * create_new_leaf_group(leaf_group *leaf,int key, int pointer);
+struct node *alloc_tree_bottom_up(struct node *lower_row, int num_lower_elems);
 
 
 void main()
@@ -76,6 +82,7 @@ void main()
 	int input;
 
 	int exit_flag=0;
+	num_of_leaf_groups = 0;
 count =0;
 
 
@@ -108,11 +115,12 @@ count =0;
 			find_and_print(root, input);
 			printf("the number lookedup for is %d ",input);
 			break;
-
+*/
 		case 'p':
-			print_tree(root);
+		printf("the keys are %d\n",*leaf[0]->keys);
+			//print_tree(root);
 			break;
-
+/*
 		case 'e':
 			exit_flag = 1;
 			break;
@@ -170,19 +178,7 @@ node * make_node( void ) {
 
 leaf_group * insert_into_leaf( leaf_group * leaf, int key, record * pointer ) {
 
-	int i, insertion_point;
 
-	insertion_point = 0;
-	while (insertion_point < leaf->no_of_elements && leaf->keys[insertion_point] < key)
-		insertion_point++;
-
-	for (i = leaf->no_of_elements; i > insertion_point; i--) {
-		leaf->keys[i] = leaf->keys[i - 1];
-		//leaf->pointers[i] = leaf->pointers[i - 1];
-	}
-	leaf->keys[insertion_point] = key;
-	//leaf->pointers[insertion_point] = pointer;
-	leaf->no_of_elements++;
 	//count++;
 	return leaf;
 }
@@ -232,21 +228,22 @@ leaf_group * new_leaf_group(int key, record * pointer)
 	root->no_of_elements++;
 	return root;
 }
-
+/*
 node* new_parent(void)
 {
 node * parent ;
 parent=make_parent();
-parent->first_pointer = root;
+
 return parent;
 
 
 }
+*/
 
 node* make_parent(void)
 {
 node *new_node;
-new_node = malloc(sizeof(node));
+//new_node = malloc(sizeof(node));
 new_node->keys = malloc(order * sizeof(int));
 new_node->first_pointer = malloc(1 * sizeof(void*));
 new_node->parent = malloc(1 * sizeof(void*));
@@ -259,77 +256,123 @@ return new_node;
 leaf_group * insert(leaf_group *root, int key, int value)
 {
 	record* pointer;
-	leaf_group* leaf;
+	//leaf_group **leaf;
+	node *parent;
+	//node *new_root;
+	int num_of_leaf_groups = 3;
 	int num_leaves;
-	int num_of_leaf_groups;
+	int new_keys[28] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,29,30};
+	node *tree_root;
+
+	int max_children = MAX_CHILDREN;
+
+	int i=0;
+	int arr_idx=0;;
+
+
+    tree_root = calloc(1, sizeof(struct node));
+    leaf = calloc(5, sizeof(struct leaf_group*));
+	parent = calloc(5, sizeof(struct node));
+	pointer = make_record(value);
+
+	while(i<5){
 	int x = 1;
 	int y = 0;
 
+	leaf[i] = calloc(1, sizeof(struct leaf_group) + max_children * CSBPT_ELEM_SIZE);
+	leaf[i]->keys = malloc((order * (order+1)) * sizeof(int));
+parent[i].keys = malloc(sizeof(int));
+	parent[i].first_pointer = leaf[i];
 
 
-
-	pointer = make_record(value);
-
-
-	if (root == NULL){
-	        return new_leaf_group(key, pointer);
-	        num_of_leaf_groups++;
-	        }
-
-    leaf = root;
-
-   if (leaf->no_of_elements < (order*(order+1))) {
-   leaf = insert_into_leaf(leaf, key, pointer);
-
-		 for(int i =0; i<leaf->no_of_elements;i++)
-    printf("%d\t",leaf->keys[i]);
-
-    if (leaf->no_of_elements == (order*(order+1)))
-    {
-    printf("\n parents pohocha!!\n");
-    parent = new_parent();
-    for( x, y;y<order,x<order+2;y++,x=x+2)
-    {
-    parent->keys[y] = leaf->keys[x];
-    printf("%d\n",parent->keys[y]);
+	if (i>0)
+	{
+	leaf[i]->prev = leaf[i - 1];
+    leaf[i - 1]->next = leaf[i];
     }
 
+   // if (leaf[i] == NULL)
+    //{
+    //leaf[i]->keys = key;
 
+    //}
+
+    //while (leaf[i]->no_of_elements < (order*(order+1)))
+    //{
+        for(int j =0 ;j<(order*(order+1));j++)
+        {
+        leaf[i]->keys[j] = new_keys[arr_idx];
+        arr_idx++;
+        leaf[i]->no_of_elements++;
+        printf("the keys are %d\n",leaf[i]->keys[j]);
+        }
+        for( x, y;y<order,x<order+2;y++,x=x+2)
+    {
+    parent[i].keys[y] = leaf[i]->keys[x];
+    printf("%d\n",parent[i].keys[y]);
     }
-		return leaf;
+        printf("leaf group no is %d \n ", i);
+        if(leaf[i]->no_of_elements == (order*(order+1)) )
+        i++;
+        tree_root = alloc_tree_bottom_up(parent,num_of_leaf_groups);
+}
+
+//tree_root->first_pointer = parent;
+tree_root->keys = malloc(sizeof(int));
+tree_root->keys[0] = leaf[0]->keys[(order*(order+1))-1];
+printf("root keys are:%d\n",tree_root->keys[0]);
+print_parent(tree_root);
+return leaf[i];
+}
+
+
+
+struct node *alloc_tree_bottom_up(struct node *lower_row, int num_lower_elems)
+{
+	int i, j;
+	int num_elems = num_lower_elems /3;
+	int num_groups = num_elems /3;
+
+	struct node  *row;
+	struct node  *ret;
+
+	if(num_elems > 1) {
+
+		row = calloc(5, sizeof(struct node));
+		for(i = 0; i < num_elems; i++) {
+
+			row[i].first_pointer = &lower_row[i * 3];
 		}
 
-    if(count > ((order*(order+1))))
-    {
-    leaf =  create_new_leaf_group(root,key,pointer);
-  //  return leaf;
-
-
-
-
-    return leaf;
-    }
-
-
-
-
-
-
-
-
-/*
-
-
-	if (leaf->num_keys < order - 1) {
-
-		return root;
+		ret = alloc_tree_bottom_up(row, num_elems);
+	} else {
+		ret = malloc(sizeof(struct node));
+		ret->first_pointer = lower_row;
 	}
 
-
-	return insert_into_leaf_after_splitting(root, leaf, key, pointer);
-
-*/
+	return ret;
 }
+
+void print_parent(node*temp_root)
+{
+
+node *temp_parent = temp_root->first_pointer;
+leaf_group * temp_leaf = temp_parent->first_pointer;
+leaf_group * temp_next_leaf = temp_leaf->next;
+
+printf("parent keys are: %d\n",temp_parent[0].keys[1]);
+printf("leaf keys are : %d\n", temp_leaf[0].keys[5]);
+printf("next leaf keys are:%d\n",temp_next_leaf[0].keys[5]);
+
+
+}
+
+
+
+
+
+
+//}
 
 
 leaf_group * create_new_leaf_group(leaf_group *leaf,int key, int pointer)
@@ -358,7 +401,6 @@ for (int i = temp_leaf->no_of_elements; i > insertion_point; i--) {
     printf("%d\t",temp_leaf->keys[i]);
 	//count++;
 	return temp_leaf;
-
 }
 /*
 node * insert_into_leaf_after_splitting(node * root, node * leaf, int key, record * pointer)
