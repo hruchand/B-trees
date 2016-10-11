@@ -1,38 +1,4 @@
-#ifndef PRODUCT
-#define ASSERT(x) assert(x);
-#else
-#define ASSERT(x) ((void)0)
-#endif /*PRODUCT*/
-
-
-
-
-#include <stdio.h>
-#include<stdlib.h>
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <time.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
-
-
-struct IPair {
-  int d_key;
-  void* d_child;
-};
-
-/* a B+-Tree internal node of 64 bytes.
-   corresponds to a cache line size of 64 bytes.
-   We can store a maximum of 7 keys and 8 child pointers in each node. */
-struct BPINODE64 {
-	struct IPair d_entry[8];
-    /* d_entry[0].d_key is used to store the number of used keys in this node*/
-};
-
-/* one B+-Tree leaf entry */
-struct LPair {
+typedef struct LPair {
   int d_key;
   int d_tid;       /* tuple ID */
 };
@@ -40,7 +6,7 @@ struct LPair {
 /* a B+-Tree internal node of 64 bytes.
    corresponds to a cache line size of 64 bytes.
    We can store a maximum of 7 keys and 8 child pointers in each node. */
-struct BPLNODE64 {
+typedef struct BPLNODE64 {
   int        d_num;       /* number of keys in the node */
   void*      d_flag;      /* this pointer is always set to null and is used to distinguish
 			     between and internal node and a leaf node */
@@ -56,58 +22,66 @@ struct BPLNODE64 {
    We can store a maximum of 14 keys in each node.
    Each node has a maximum of 15 implicit child nodes.
 */
-struct CSBINODE64 {
+typedef struct CSBINODE64 {
   int    d_num;
   void*  d_firstChild;       //pointer to the first child in a node group
   int    d_keyList[14];
-
-
+//public:
+  //int operator == (const CSBINODE64& node) {
+    //if (d_num!=node.d_num)
+      //return 0;
+    //for (int i=0; i<d_num; i++)
+      //if (d_keyList[i]!=node.d_keyList[i])
+        //return 0;
+    //return 1;
+  //}
 };
-
-void*          g_free=0;
-int            g_expand=0;
-int            g_split=0;
-//Stat           g_stat_rec;
-int            g_space_used=0;
-struct BPINODE64*     g_bp_root64;
-struct CSBINODE64*    g_csb_root64;
-struct GCSBINODE64_2* g_gcsb_root64_2;
-struct GCSBINODE64_3* g_gcsb_root64_3;
-char*          g_pool_start;
-char*          g_pool_curr;
-char*          g_pool_end;
+int array[] = {2,3,5,7,12,13,16,19,20,22,24,25,27,30,31,33,36,39};
+struct LPair* a;
+struct CSBINODE64* root;
 
 
-void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper);
 
- void main()
-{
-	struct LPair* temmp = NULL;
-	printf("we are ON");
-	csbBulkLoad64(5,temmp,7,7);
- return 0;
+
+void main(){
+    int i =0;
+    int iUpper = 2;
+    int lUpper = 2;
+    int count =(int)( sizeof(array) / sizeof(array[0]));
+    printf ("count is %d\n",count);
+    a = (struct LPair*)malloc(sizeof(struct LPair)*count);
+    for(i =0;i<count;i++){
+        a[i].d_key = array[i];
+        a[i].d_tid = array[i];
+        printf("%d\t",a[i].d_key);
+    }
+   csbBulkLoad64(count,a,iUpper,lUpper);
+   // printf ("%d\n",root->d_keyList[2]);
+
+
+
+
+
 }
 
 
 
-
-
-
-
-
-
-
-
-void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
-	struct BPLNODE64 *lcurr, *start, *lprev;
-	struct  CSBINODE64 *iLow, *iHigh, *iHighStart, *iLowStart;
+// bulk load a CSB+-Tree
+// n: size of the sorted array
+// a: sorted leaf array
+// iUpper: maximum number of keys for each internal node duing bulkload.
+// lUpper: maximum number of keys for each leaf node duing bulkload.
+// Note: iUpper has to be less than 14.
+void csbBulkLoad64(int n, struct LPair* a, int iUpper, int lUpper) {
+  struct BPLNODE64 *lcurr, *start, *lprev;
+  struct CSBINODE64 *iLow, *iHigh, *iHighStart, *iLowStart;
   int temp_key;
   void* temp_child;
   int i, j, nLeaf, nHigh, nLow, remainder;
 
   // first step, populate all the leaf nodes
   nLeaf=(n+lUpper-1)/lUpper;
-  lcurr = (struct CSBINODE64*) malloc (sizeof(struct BPLNODE64)*nLeaf);
+  lcurr=(struct BPLNODE64*) malloc(sizeof(struct BPLNODE64)*nLeaf);
   lcurr->d_flag=0;
   lcurr->d_num=0;
   lcurr->d_prev=0;
@@ -115,34 +89,29 @@ void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
 
   for (i=0; i<n; i++) {
     if (lcurr->d_num >= lUpper) { // at the beginning of a new node
-#ifdef FIX_HARDCODE
-      // fill the empty slots with MAX_KEY
-      for (j=lcurr->d_num; j<6; j++)
-	lcurr->d_entry[j].d_key=MAX_KEY;
-#endif
+
       lprev=lcurr;
       lcurr++;
       lcurr->d_flag=0;
       lcurr->d_num=0;
       lcurr->d_prev=lprev;
-   //   ASSERT(lprev);
+      //ASSERT(lprev);
       lprev->d_next=lcurr;
     }
     lcurr->d_entry[lcurr->d_num]=a[i];
     lcurr->d_num++;
+    //printf("lcurr first is %d \n",lcurr->d_entry[0].d_key);
+    //printf("lcurr sec is %d \n",lcurr->d_entry[1].d_key);
   }
+
   lcurr->d_next=0;
-#ifdef FIX_HARDCODE
-      // fill the empty slots with MAX_KEY
-      for (j=lcurr->d_num; j<6; j++)
-	lcurr->d_entry[j].d_key=MAX_KEY;
-#endif
+
 
   // second step, build the internal nodes, level by level.
   // we can put IUpper keys and IUpper+1 children (implicit) per node
   nHigh=(nLeaf+iUpper)/(iUpper+1);
   remainder=nLeaf%(iUpper+1);
-  iHigh=(struct CSBINODE64*) malloc (sizeof(struct CSBINODE64)*nHigh);
+  iHigh=(struct CSBINODE64*) malloc(sizeof(struct CSBINODE64)*nHigh);
   iHigh->d_num=0;
   iHigh->d_firstChild=start;
   iHighStart=iHigh;
@@ -154,10 +123,7 @@ void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
       iHigh->d_keyList[j]=lcurr->d_entry[lcurr->d_num-1].d_key;
       lcurr++;
     }
-#ifdef FIX_HARDCODE
-    for (j=iUpper+1; j<14; j++)
-      iHigh->d_keyList[j]=MAX_KEY;
-#endif
+
     iHigh++;
   }
   if (remainder==1) {
@@ -168,11 +134,7 @@ void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
     iHigh->d_num=1;
     iHigh->d_firstChild=lcurr-1;
     lcurr++;
-#ifdef FIX_HARDCODE
-    for (j=1; j<14; j++)
-      iHigh->d_keyList[j]=MAX_KEY;
-    iHigh++;
-#endif
+
   }
   else if (remainder>1) {
     iHigh->d_firstChild=lcurr;
@@ -181,16 +143,8 @@ void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
       lcurr++;
     }
     iHigh->d_num=remainder-1;
-#ifdef FIX_HARDCODE
-    for (j=remainder; j<14; j++)
-      iHigh->d_keyList[j]=MAX_KEY;
-    iHigh++;
-#endif
   }
-#ifdef FIX_HARDCODE
-  (iHigh-1)->d_keyList[(iHigh-1)->d_num]=MAX_KEY;
-#endif
- // ASSERT((lcurr-nLeaf) == start);
+  //ASSERT((lcurr-nLeaf) == start);
 
   while (nHigh>1) {
     nLow=nHigh;
@@ -198,7 +152,8 @@ void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
     iLowStart=iLow;
     nHigh=(nLow+iUpper)/(iUpper+1);
     remainder=nLow%(iUpper+1);
-    iHigh=(struct CSBINODE64*) malloc (sizeof(struct CSBINODE64)*nHigh);
+    iHigh=(struct CSBINODE64*) malloc(sizeof(struct CSBINODE64)*nHigh);
+    //iLow=(struct CSBINODE64*) malloc(sizeof(struct CSBINODE64)*nLow);
     iHigh->d_num=0;
     iHigh->d_firstChild=iLow;
     iHighStart=iHigh;
@@ -210,10 +165,7 @@ void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
 	iHigh->d_keyList[j]=iLow->d_keyList[iLow->d_num];
 	iLow++;
       }
-#ifdef FIX_HARDCODE
-      for (j=iUpper+1; j<14; j++)
-	iHigh->d_keyList[j]=MAX_KEY;
-#endif
+
       iHigh++;
     }
     if (remainder==1) { //this is a special case, we have to borrow a key from the left node
@@ -222,11 +174,7 @@ void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
       iHigh->d_num=1;
       iHigh->d_firstChild=iLow-1;
       iLow++;
-#ifdef FIX_HARDCODE
-      for (j=1; j<14; j++)
-	iHigh->d_keyList[j]=MAX_KEY;
-      iHigh++;
-#endif
+
     }
     else if (remainder>1) {
       iHigh->d_firstChild=iLow;
@@ -236,17 +184,15 @@ void csbBulkLoad64(int n,struct LPair* a, int iUpper, int lUpper) {
 	iLow++;
       }
       iHigh->d_num=remainder-1;
-#ifdef FIX_HARDCODE
-      for (j=remainder; j<14; j++)
-	iHigh->d_keyList[j]=MAX_KEY;
-      iHigh++;
-#endif
+
     }
-#ifdef FIX_HARDCODE
-    (iHigh-1)->d_keyList[(iHigh-1)->d_num]=MAX_KEY;
-#endif
-  //  ASSERT((iLow-nLow) == iLowStart);
+   //nHigh--;
+    //ASSERT((iLow-nLow) == iLowStart);
   }
 
-  g_csb_root64=iHighStart;
+  root=iHighStart;
+
+printf ("I am \n%d\n",iHighStart->d_keyList[0]);
 }
+
+
